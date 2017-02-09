@@ -3,8 +3,6 @@ package huffman;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.PriorityQueue;
 
 import com.google.common.collect.HashMultiset;
@@ -16,10 +14,17 @@ public class HuffmanEncoder {
 	
 	public HuffmanEncoder(BufferedReader sourceData) {
 		this.sourceData = sourceData;
+		//Check to see that sourceData is not empty
+		//Check to see that sourceData contains more than a single character
 		buildTree(getCharFrequencies());
 		traverseTree(this.root, "");
+		System.out.println("String Representation of the Binary Tree:");
+		printTree(this.root);
+		System.out.println("");
+		System.out.println("Graphical Representation of the Binary Tree:");
+		printTreeTwo(this.root);
 	}
-	
+		
 	private void buildTree(Multiset<Character> characterCounts) {
 		PriorityQueue<HuffmanNode> huffmanTree = new PriorityQueue<HuffmanNode>();
 		
@@ -48,6 +53,21 @@ public class HuffmanEncoder {
 		}
 	}
 	
+	private void printTree(HuffmanNode node){
+		if (node instanceof HuffmanInternalNode) {
+			HuffmanInternalNode traversingNode = (HuffmanInternalNode) node;
+			System.out.print(" (");
+			printTree(traversingNode.getLeftChild());
+			System.out.print(" ");
+			printTree(traversingNode.getRightChild());
+			System.out.print(") ");
+		} else if (node instanceof HuffmanLeaf) {
+			System.out.print("'" + ((HuffmanLeaf) node).getChar() + "'");
+		} else {
+			System.out.print("#");
+		}
+	}
+	
 	
 	private Multiset<Character> getCharFrequencies() {
 
@@ -66,7 +86,7 @@ public class HuffmanEncoder {
 	}
 	
 	public static void main(String[] args) {
-		String source = "aaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbccccccccccddddddddeeeeeeee";
+		String source = "happy";
 		StringReader sourceReader = new StringReader(source);
 		BufferedReader testBuffer = new BufferedReader(sourceReader);
 		HuffmanEncoder hotdog = new HuffmanEncoder(testBuffer);
