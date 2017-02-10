@@ -5,11 +5,18 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.PriorityQueue;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.google.common.collect.HashMultiset;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multiset;
 
 public class HuffmanEncoder {
-	private BufferedReader sourceData;
+	
+	
+	/**
+	 * Indicates whether or not this Huffman tree encodes a trivial one character alphabet.
+	 */
 	private boolean hasTrivialTree = false;
 	
 	/**
@@ -17,16 +24,23 @@ public class HuffmanEncoder {
 	 */
 	private HuffmanInternalNode root;
 	
+	private BiMap<Character, String> codeMapping = HashBiMap.create();
+	
+	
 	/**
 	 * Constructs a Huffman code for the data contained in a non-empty  
 	 * character stream.
 	 * 
 	 * @param sourceData - The character stream that we wish to compress.
-	 * @throws IOException 
+	 * @throws IOException, IllegalArgumentException 
 	 */
 	public HuffmanEncoder(BufferedReader sourceData) throws IOException {
 		
-		buildTree(getCharFrequencies(sourceData));
+		Multiset<Character> charCounts = getCharFrequencies(sourceData);
+		verifyValidAlphabet(charCounts);
+		initiateTree(charCounts);
+		
+		
 		traverseTree(this.root, "");
 		System.out.println("String Representation of the Binary Tree:");
 		printTree(this.root);
@@ -39,12 +53,15 @@ public class HuffmanEncoder {
 	 * @param characterCounts
 	 */
 	public HuffmanEncoder(Multiset<Character> characterCounts) {
-		if (characterCounts.size() == 0) {
-			throw new IllegalArgumentException("Cannot compress an empty alphabet.");
-		} else if (characterCounts == null) {
+		verifyValidAlphabet(characterCounts);
+		initiateTree(characterCounts);
+	}
+	
+	private void verifyValidAlphabet(Multiset<Character> characterCounts) {
+		if (characterCounts == null) {
 			throw new IllegalArgumentException("Cannot supply a null value for characterCounts.");
-		} else {
-			initiateTree(characterCounts);
+		} else if (characterCounts.size() == 0) {
+			throw new IllegalArgumentException("Cannot compress an empty alphabet.");
 		}
 	}
 	
@@ -94,6 +111,24 @@ public class HuffmanEncoder {
 			traverseTree( ((HuffmanInternalNode) node).getRightChild(), bitPattern + "1");
 		} else if (node instanceof HuffmanLeaf) {
 			System.out.println("Char: " + ((HuffmanLeaf) node).getChar() + " Bit Pattern: " + bitPattern);
+		}
+	}
+	
+	private void populateCodeTable(HuffmanNode node, StringBuffer bitPattern){
+		if (node instanceof HuffmanInternalNode) {
+			populateCodeTable( ((HuffmanInternalNode) node).getLeftChild(), bitPattern.append('0'));
+			populateCodeTable( ((HuffmanInternalNode) node).getRightChild(), bitPattern.append('1'));
+		} else if (node instanceof HuffmanLeaf) {
+			this.codeMapping.put(((HuffmanLeaf) node).getChar(), bitPattern.toString());
+		}
+	}
+	
+	private void constructCodeTable(){
+		if (hasTrivialTree) {
+			char singleOccuringCharacter = ((HuffmanLeaf) this.root.getLeftChild()).getChar();
+			this.codeMapping.put(singleOccuringCharacter, "0");
+		} else {
+			populateCodeTable(this.root, new StringBuffer());
 		}
 	}
 	
