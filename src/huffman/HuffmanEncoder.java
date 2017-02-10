@@ -1,3 +1,5 @@
+// Note: This Java code is incomplete and contains test code scattered throughout.
+
 package huffman;
 
 import java.io.BufferedReader;
