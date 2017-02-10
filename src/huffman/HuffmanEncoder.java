@@ -10,19 +10,63 @@ import com.google.common.collect.Multiset;
 
 public class HuffmanEncoder {
 	private BufferedReader sourceData;
+	private boolean hasTrivialTree = false;
+	
+	/**
+	 * The root (or head) node of the (binary) Huffman Tree.
+	 */
 	private HuffmanInternalNode root;
 	
-	public HuffmanEncoder(BufferedReader sourceData) {
-		this.sourceData = sourceData;
-		//Check to see that sourceData is not empty
-		//Check to see that sourceData contains more than a single character
-		buildTree(getCharFrequencies());
+	/**
+	 * Constructs a Huffman code for the data contained in a non-empty  
+	 * character stream.
+	 * 
+	 * @param sourceData - The character stream that we wish to compress.
+	 * @throws IOException 
+	 */
+	public HuffmanEncoder(BufferedReader sourceData) throws IOException {
+		
+		buildTree(getCharFrequencies(sourceData));
 		traverseTree(this.root, "");
 		System.out.println("String Representation of the Binary Tree:");
 		printTree(this.root);
-		System.out.println("");
-		System.out.println("Graphical Representation of the Binary Tree:");
-		printTreeTwo(this.root);
+	}
+	
+	/**
+	 * Constructs a Huffman code for a given (non-empty) alphabet with frequencies associated
+	 * with each character.
+	 * 
+	 * @param characterCounts
+	 */
+	public HuffmanEncoder(Multiset<Character> characterCounts) {
+		if (characterCounts.size() == 0) {
+			throw new IllegalArgumentException("Cannot compress an empty alphabet.");
+		} else if (characterCounts == null) {
+			throw new IllegalArgumentException("Cannot supply a null value for characterCounts.");
+		} else {
+			initiateTree(characterCounts);
+		}
+	}
+	
+	
+	private void initiateTree(Multiset<Character> characterCounts) {
+		if (characterCounts.size() == 1) {
+			buildTrivialTree(characterCounts);
+		} else {
+			buildTree(characterCounts);
+		}
+	}
+	
+	private void buildTrivialTree(Multiset<Character> characterCounts) {
+		HuffmanLeaf soleLeaf = null;
+		
+		for (char observedCharacter : characterCounts.elementSet()) {
+			soleLeaf = new HuffmanLeaf(observedCharacter, characterCounts.count(observedCharacter));
+		}
+		
+		this.root = new HuffmanInternalNode(soleLeaf);
+		this.hasTrivialTree = true;
+		
 	}
 		
 	private void buildTree(Multiset<Character> characterCounts) {
@@ -53,6 +97,8 @@ public class HuffmanEncoder {
 		}
 	}
 	
+	private void getCodeTable(){ }
+	
 	private void printTree(HuffmanNode node){
 		if (node instanceof HuffmanInternalNode) {
 			HuffmanInternalNode traversingNode = (HuffmanInternalNode) node;
@@ -68,25 +114,45 @@ public class HuffmanEncoder {
 		}
 	}
 	
+	private StringBuffer printTreeTwo(HuffmanNode node, StringBuffer treeString){
+		if (node instanceof HuffmanInternalNode) {
+			HuffmanInternalNode traversingNode = (HuffmanInternalNode) node;
+			treeString.append(" (");
+			treeString.append(traversingNode.getLeftChild());
+			treeString.append(" ");
+			treeString.append(traversingNode.getRightChild());
+			treeString.append(") ");
+		} else if (node instanceof HuffmanLeaf) {
+			treeString.append("'" + ((HuffmanLeaf) node).getChar() + "'");
+		} else {
+			treeString.append("#");
+		}
+		
+		return treeString;
+	}
 	
-	private Multiset<Character> getCharFrequencies() {
-
+	public String toString() {
+		String tree = null;
+		if (hasTrivialTree) {
+			tree = "('" + ((HuffmanLeaf) this.root.getLeftChild()).getChar() + "' #)";
+		} else {
+			tree = printTreeTwo(this.root, new StringBuffer()).toString();
+		}
+		return tree;
+	}
+	
+	private Multiset<Character> getCharFrequencies(BufferedReader sourceData) throws IOException {
 		Multiset<Character> charCounts = HashMultiset.create();
-		try {
-			int currentChar = this.sourceData.read();
+			int currentChar = sourceData.read();
 			while (currentChar != -1) {
 				charCounts.add((char) currentChar);
-				currentChar = this.sourceData.read();
+				currentChar = sourceData.read();
 			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		return charCounts;
 	}
 	
-	public static void main(String[] args) {
-		String source = "happy";
+	public static void main(String[] args) throws IOException {
+		String source = "mississippi";
 		StringReader sourceReader = new StringReader(source);
 		BufferedReader testBuffer = new BufferedReader(sourceReader);
 		HuffmanEncoder hotdog = new HuffmanEncoder(testBuffer);
