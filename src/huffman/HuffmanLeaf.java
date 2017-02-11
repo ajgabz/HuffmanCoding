@@ -1,5 +1,10 @@
 package huffman;
 
+/**
+ * In a Huffman tree, the encoded characters are held as the leaves of the tree.
+ * @author aarongaba
+ *
+ */
 public class HuffmanLeaf extends HuffmanNode {
 
 	/**
